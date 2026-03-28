@@ -518,7 +518,7 @@ function rollDice(){
     const myP=G.turn==='human'?G.human:G.ai;
     G.movable=calcMovable(myP,G.rollVal,G.turn);
 
-  const bonus=G.rollVal===1||G.rollVal===4||G.rollVal===5;
+  const bonus=G.rollVal===1||G.rollVal===4||G.rollVal===6;
   const bonusLabel=sum===0?'全黒':'白'+G.rollVal+'面';
   const bonusNote=bonus?'<br><span style="font-size:.62rem;color:#f0a020">'+bonusLabel+' → ボーナスターン！</span>':'';
 
@@ -645,7 +645,7 @@ function applyMoveLogic(from,owner,val){
 function afterMove(owner){
   if(G.done) return;
   // Bonus on roll 2 or 3
-  const bonus=G.rollVal===1||G.rollVal===4||G.rollVal===5;
+  const bonus=G.rollVal===1||G.rollVal===4||G.rollVal===6;
   G.movable=[];
   iD('sticks').innerHTML='';
   iD('roll-num').textContent='―';
