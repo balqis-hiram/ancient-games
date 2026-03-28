@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ancient Games — 古代のゲーム</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Noto+Serif+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --mud:#100800;
+  --clay:#c08040;
+  --sand:#d4a860;
+  --papyrus:#e8d090;
+  --red-ochre:#8b2010;
+  --gold:#f0c030;
+  --ink:#2a1000;
+}
+body{
+  background:var(--mud);
+  min-height:100vh;
+  font-family:'Noto Serif JP',Georgia,serif;
+  color:var(--papyrus);
+  position:relative;
+  overflow-x:hidden;
+}
+
+/* Side borders */
+body::before,body::after{
+  content:'';position:fixed;top:0;bottom:0;width:16px;
+  background:repeating-linear-gradient(180deg,
+    var(--red-ochre) 0,var(--red-ochre) 8px,
+    var(--clay) 8px,var(--clay) 12px,
+    #1a0a00 12px,#1a0a00 16px,
+    var(--clay) 16px,var(--clay) 20px
+  );z-index:100;
+}
+body::before{left:0}body::after{right:0}
+
+.wrap{max-width:640px;margin:0 auto;padding:3rem 1.5rem 4rem;}
+
+/* Header */
+.header{text-align:center;margin-bottom:3rem}
+.header-deco{display:flex;align-items:center;gap:12px;margin-bottom:.6rem}
+.deco-line{flex:1;height:1px;background:repeating-linear-gradient(90deg,var(--red-ochre) 0,var(--red-ochre) 6px,transparent 6px,transparent 10px)}
+.deco-glyph{font-size:1.4rem;color:var(--gold)}
+h1{font-family:'Cinzel',Georgia,serif;font-size:2.2rem;letter-spacing:.15em;color:var(--gold);margin-bottom:.3rem}
+.hiero{font-size:.9rem;color:var(--clay);letter-spacing:.3em;margin-bottom:.4rem}
+.tagline{font-size:.78rem;color:#806020;letter-spacing:.15em}
+
+/* Zigzag band */
+.zband{width:100%;height:10px;margin:1.2rem 0;overflow:hidden}
+
+/* Game cards */
+.games{display:flex;flex-direction:column;gap:1rem}
+.game-card{
+  background:#1a0e00;
+  border:1px solid var(--clay);
+  border-left:4px solid var(--red-ochre);
+  border-radius:0 8px 8px 0;
+  padding:1.2rem 1.4rem;
+  display:flex;align-items:center;gap:1.2rem;
+  text-decoration:none;
+  transition:background .18s, border-left-color .18s, transform .15s;
+  position:relative;
+  overflow:hidden;
+}
+.game-card::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(135deg,
+    transparent 0,transparent 8px,
+    rgba(192,128,64,.04) 8px,rgba(192,128,64,.04) 9px
+  );
+  pointer-events:none;
+}
+.game-card:hover{
+  background:#2a1400;
+  border-left-color:var(--gold);
+  transform:translateX(4px);
+}
+.card-icon{
+  font-size:2.4rem;
+  min-width:48px;text-align:center;
+  line-height:1;
+  filter:drop-shadow(0 0 4px rgba(240,192,48,.2));
+}
+.card-body{flex:1}
+.card-title{
+  font-family:'Cinzel',Georgia,serif;
+  font-size:1.1rem;color:var(--gold);
+  letter-spacing:.08em;margin-bottom:.25rem;
+}
+.card-sub{font-size:.72rem;color:var(--clay);letter-spacing:.1em;margin-bottom:.4rem}
+.card-desc{font-size:.76rem;color:#a07840;line-height:1.6}
+.card-arrow{
+  font-size:1.2rem;color:var(--clay);opacity:.6;
+  transition:opacity .15s,transform .15s;
+}
+.game-card:hover .card-arrow{opacity:1;transform:translateX(4px)}
+
+/* Coming soon */
+.game-card.soon{opacity:.55;pointer-events:none;cursor:default}
+.soon-badge{
+  position:absolute;top:10px;right:12px;
+  font-size:.62rem;letter-spacing:.12em;
+  background:rgba(139,32,16,.3);
+  border:1px solid var(--red-ochre);
+  border-radius:3px;padding:2px 8px;
+  color:var(--red-ochre);
+}
+
+/* Footer */
+.footer{text-align:center;margin-top:3rem;font-size:.65rem;color:#504020;letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="header-deco">
+      <div class="deco-line"></div>
+      <div class="deco-glyph">𓂀</div>
+      <div class="deco-line"></div>
+    </div>
+    <h1>ANCIENT GAMES</h1>
+    <div class="hiero">𓇳 𓂀 𓋹 𓈗</div>
+    <div class="tagline">古代世界のゲームをブラウザで</div>
+  </div>
+
+  <svg class="zband" viewBox="0 0 400 10" preserveAspectRatio="none">
+    <polyline points="0,10 20,0 40,10 60,0 80,10 100,0 120,10 140,0 160,10 180,0 200,10 220,0 240,10 260,0 280,10 300,0 320,10 340,0 360,10 380,0 400,10" fill="none" stroke="#8b2010" stroke-width="1.5"/>
+    <polyline points="0,10 20,0 40,10 60,0 80,10 100,0 120,10 140,0 160,10 180,0 200,10 220,0 240,10 260,0 280,10 300,0 320,10 340,0 360,10 380,0 400,10" fill="none" stroke="#c08040" stroke-width=".5" transform="translate(0,2)"/>
+  </svg>
+
+  <div class="games">
+
+    <a class="game-card" href="senet.html">
+      <div class="card-icon">𓇳</div>
+      <div class="card-body">
+        <div class="card-title">SENET</div>
+        <div class="card-sub">𓊃𓈖𓏏 — 古代エジプト ／ 紀元前3500年頃</div>
+        <div class="card-desc">魂の来世への旅をテーマにした世界最古のボードゲームのひとつ。投擲棒を投げて30マスのS字ボードを駒で進む。</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <div class="game-card soon">
+      <div class="soon-badge">COMING SOON</div>
+      <div class="card-icon">𓀀</div>
+      <div class="card-body">
+        <div class="card-title">MEHEN</div>
+        <div class="card-sub">古代エジプト ／ 紀元前3000年頃</div>
+        <div class="card-desc">蛇神メヘンの渦巻き型ボードを使ったゲーム。</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </div>
+
+    <div class="game-card soon">
+      <div class="soon-badge">COMING SOON</div>
+      <div class="card-icon">𓀭</div>
+      <div class="card-body">
+        <div class="card-title">ROYAL GAME OF UR</div>
+        <div class="card-sub">メソポタミア ／ 紀元前2600年頃</div>
+        <div class="card-desc">大英博物館所蔵の王家のゲーム。四面体サイコロと20マスのボード。</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </div>
+
+  </div>
+
+  <svg class="zband" viewBox="0 0 400 10" preserveAspectRatio="none" style="transform:scaleY(-1)">
+    <polyline points="0,10 20,0 40,10 60,0 80,10 100,0 120,10 140,0 160,10 180,0 200,10 220,0 240,10 260,0 280,10 300,0 320,10 340,0 360,10 380,0 400,10" fill="none" stroke="#8b2010" stroke-width="1.5"/>
+  </svg>
+
+  <div class="footer">古代人も同じボードを囲んで遊んでいた — 紀元前3500年から現代まで</div>
+
+</div>
+</body>
+</html>
