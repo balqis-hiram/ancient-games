@@ -347,10 +347,10 @@ h1{color:var(--gold);font-size:clamp(1.2rem,5vw,1.7rem);letter-spacing:.15em}
   </svg>
 
   <div class="ref">
-    <span>投擲棒（出目）</span>：白1=1マス＋もう一度 ／ 白2=2マス ／ 白3=3マス ／ 白4=4マス＋もう一度 ／ 全黒=5マス＋もう一度<br>
+    <span>投擲棒（出目）</span>：白1=1マス＋もう一度 ／ 白2=2マス ／ 白3=3マス ／ 白4=4マス＋もう一度 ／ 全黒=6マス＋もう一度<br>
     <span>ブロッケード</span>：同じ駒が2つ以上隣接 → 相手は飛び越えも追い返しもできない。<br>
     <span>15 生命の家</span>（安全・水の家からの帰還先） ／
-    <span>26 幸福の家</span>（必ず止まる・安全・脱出可） ／
+    <span>26 幸福の家</span>（必ず止まる・安全・攻撃不可・脱出可） ／
     <span>27 水の家</span>（生命の家＝15へ強制送還） ／
     <span>28 三真理の家</span>（安全・<b>出目3でのみ脱出</b>） ／
     <span>29 レー・アトゥムの家</span>（安全・<b>出目2でのみ脱出</b>） ／
@@ -374,7 +374,7 @@ const SPECIAL_NAMES={15:'生命',26:'幸福',27:'水',28:'三真理',29:'Re-Atum
 // Hieroglyph symbols for special squares
 const SPECIAL_SVG={15:'𓋹',26:'𓄿',27:'𓈗',28:'∴',29:'𓂀',30:'𓇳'};
 // Safe squares: cannot be swapped off (only in positions 1-26 range; last 4 are NOT safe from each other)
-const SAFE_EARLY=new Set([15,26]);
+const SAFE_EARLY=new Set([26,28,29]); // 安全マス: 攻撃不可
 // Exit squares and their required roll (null = any)
 const EXIT_ROLL={26:null,27:4,28:3,29:2,30:null};
 
@@ -415,16 +415,19 @@ function initGame(){
   updateBO();renderBoard();
 }
 
-/* ── Blockade: 2+ consecutive same-owner pieces ── */
-function blockadeCovers(sq, moverOwner){
-  const opp=moverOwner==='human'?'ai':'human';
-  const cell=G.board[sq];
-  if(!cell||cell.owner!==opp) return false;
+/* ── Blockade helpers ──
+   runLength(sq, owner): 連続駒数を返す
+   isProtected(sq, opp): 2つ以上隣接 → 攻撃不可
+   isHardBlock(sq, opp): 3つ以上隣接 → 飛び越えも不可 */
+function runLength(sq, owner){
+  if(!G.board[sq]||G.board[sq].owner!==owner) return 0;
   let count=1;
-  for(let i=sq-1;i>=1;i--){if(G.board[i]&&G.board[i].owner===opp)count++;else break;}
-  for(let i=sq+1;i<=30;i++){if(G.board[i]&&G.board[i].owner===opp)count++;else break;}
-  return count>=2;
+  for(let i=sq-1;i>=1;i--){if(G.board[i]&&G.board[i].owner===owner)count++;else break;}
+  for(let i=sq+1;i<=30;i++){if(G.board[i]&&G.board[i].owner===owner)count++;else break;}
+  return count;
 }
+function isProtected(sq, opp){ return runLength(sq,opp)>=2; }
+function isHardBlock(sq, opp){ return runLength(sq,opp)>=3; }
 
 /* ── Can piece at `from` move `val` squares? ── */
 function canMove(from,val,owner){
@@ -452,15 +455,19 @@ function canMove(from,val,owner){
   // Cannot land on own piece
   if(G.board[dest]&&G.board[dest].owner===owner) return false;
 
-  // Check path for opponent blockade (3+ consecutive)
+  // 3つ以上隣接 → 飛び越えも不可（経路チェック）
   for(let s=from+1;s<=dest;s++){
-    if(blockadeCovers(s,owner)) return false;
+    if(isHardBlock(s,opp)) return false;
   }
 
-  // Safe early squares: cannot swap if occupied by opp
-  if(SAFE_EARLY.has(dest)&&G.board[dest]&&G.board[dest].owner===opp) return false;
+  // 着地先が相手の駒の場合
+  if(G.board[dest]&&G.board[dest].owner===opp){
+    // 安全マス（26・28・29）は攻撃不可
+    if(SAFE_EARLY.has(dest)) return false;
+    // 2つ以上隣接（保護状態）→ 攻撃不可
+    if(isProtected(dest,opp)) return false;
+  }
 
-  // Last 4 squares (27-30) cannot protect each other — swapping allowed
   return true;
 }
 
@@ -501,7 +508,7 @@ function rollDice(){
     let r,sum;
     r=Array.from({length:4},()=>Math.random()<.5?1:0);
     sum=r.reduce((a,b)=>a+b,0);
-    G.rollVal=sum===0?5:sum;  // 全黒=5マス
+    G.rollVal=sum===0?6:sum;  // 全黒=6マス
     G.phase='move';
 
     iD('sticks').innerHTML=r.map(v=>`<div class="stick ${v?'light':'dark'}"></div>`).join('');
@@ -599,16 +606,21 @@ function applyMoveLogic(from,owner,val){
   // sq27 direct exit via roll=4 handled above (dest>30 when from=27,val=4)
   // sq27 → return to 15 (Option 1)
   if(dest===27){
-    const back=15;
-    if(G.board[back]&&G.board[back].owner===opp){
-      // find first available square behind 15
-      let alt=14;
-      while(alt>=1&&G.board[alt])alt--;
-      if(alt>=1){G[opp][G[opp].indexOf(back)]=alt;G.board[alt]={owner:opp};}
-      else{G[opp][G[opp].indexOf(back)]='off';if(opp==='human')G.offH++;else G.offA++;updateBO();}
-    } else {G.board[27]=null;}
-    pieces[idx]=back;G.board[back]={owner};
-    setMsg('水の家！再生の家（15）へ戻る');
+    // 15が空いていればそこへ、埋まっていれば振り出し(1番)から最寄りの空マスへ
+    let back=15;
+    if(G.board[15]){
+      // 1番から順に最寄りの空マスを探す
+      back=-1;
+      for(let s=1;s<=30;s++){
+        if(!G.board[s]&&s!==27){back=s;break;}
+      }
+    }
+    G.board[27]=null;
+    if(back>=1){
+      pieces[idx]=back;
+      G.board[back]={owner};
+      setMsg(back===15?'水の家！生命の家（15）へ戻る':'水の家！最寄りの空マス（'+back+'）へ戻る');
+    }
     checkWin();return;
   }
 
