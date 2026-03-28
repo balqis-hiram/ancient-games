@@ -432,18 +432,19 @@ function canMove(from,val,owner){
   const opp=owner==='human'?'ai':'human';
   const dest=from+val;
 
+  // sq28: only exact roll of 3 exits the board — no other move allowed
+  if(from===28) return dest>30 && val===3;
+  // sq29: only exact roll of 2 exits the board — no other move allowed
+  if(from===29) return dest>30 && val===2;
+
   // Must stop on sq26 before proceeding — cannot skip it
   if(from<26&&dest>26) return false;
 
   // Bearing off
   if(dest>30){
     if(from<26) return false;
-    // sq27: only roll=4 allows direct exit (Option 2)
+    // sq27: only roll=4 allows direct exit
     if(from===27) return val===4;
-    // sq28: only roll=3
-    if(from===28) return val===3;
-    // sq29: only roll=2
-    if(from===29) return val===2;
     // sq26, sq30: any roll (overshoot allowed)
     return true;
   }
