@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Senet 𓊃𓈖𓏏</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --mud:#1a0e04;--clay:#c08040;--sand:#d4a860;--papyrus:#e8d090;
+  --red-ochre:#8b2010;--black-ink:#1a0a00;--water-blue:#2848a0;
+  --gold:#f0c030;--ink:#2a1000;
+}
+body{
+  background:var(--mud);min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;
+  padding:1rem 0.8rem;font-family:Georgia,'Times New Roman',serif;
+  color:var(--papyrus);position:relative;overflow-x:hidden;
+}
+body::before,body::after{
+  content:'';position:fixed;top:0;bottom:0;width:18px;
+  background:repeating-linear-gradient(180deg,
+    var(--red-ochre) 0px,var(--red-ochre) 8px,
+    var(--clay) 8px,var(--clay) 12px,
+    var(--black-ink) 12px,var(--black-ink) 16px,
+    var(--clay) 16px,var(--clay) 20px);
+  z-index:100;
+}
+body::before{left:0}body::after{right:0}
+.container{width:100%;max-width:680px;padding:0 4px}
+
+.title-block{text-align:center;margin-bottom:.8rem}
+.title-deco{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:.3rem}
+.deco-line{flex:1;height:2px;background:repeating-linear-gradient(90deg,var(--red-ochre) 0,var(--red-ochre) 6px,transparent 6px,transparent 10px)}
+.deco-eye{font-size:1.1rem;color:var(--gold)}
+h1{color:var(--gold);font-size:1.7rem;letter-spacing:.2em}
+.sub{color:#806020;font-size:.68rem;letter-spacing:.22em}
+.hiero{font-size:.8rem;color:var(--clay);letter-spacing:.3em;margin-top:.1rem}
+.naqada-band{width:100%;margin:.4rem 0;overflow:hidden;height:12px}
+
+.status-bar{
+  display:flex;justify-content:space-between;align-items:center;
+  background:#140a00;border:1px solid var(--clay);
+  border-top:3px solid var(--red-ochre);border-radius:0 0 6px 6px;
+  padding:.45rem .85rem;margin-bottom:.6rem;gap:.5rem
+}
+.turn-lbl{color:var(--gold);font-size:.85rem;font-weight:bold}
+.msg{color:#d4a850;font-size:.73rem;text-align:right;flex:1;line-height:1.4}
+
+.info-bar{display:flex;align-items:center;background:#140a00;border:1px solid var(--clay);border-radius:6px;padding:.5rem .9rem;margin-bottom:.6rem;gap:.8rem}
+.info-player{display:flex;align-items:center;gap:.6rem;flex:1}
+.info-piece{width:14px;height:20px;border:1px solid rgba(0,0,0,.5);flex-shrink:0}
+.human-pc{background:var(--papyrus);border-radius:2px}
+.ai-pc{background:var(--red-ochre);clip-path:polygon(50% 0%,0% 100%,100% 100%)}
+.info-name{font-size:.72rem;color:var(--papyrus);line-height:1.2}
+.info-off{font-size:.68rem;color:#906030}
+.bo-cnt{color:var(--gold);font-weight:bold}
+.info-divider{width:1px;background:var(--clay);opacity:.35;align-self:stretch;margin:0 .2rem}
+
+.board-outer{
+  position:relative;background:#140a00;
+  border:3px solid var(--clay);border-radius:6px;
+  padding:10px 10px 8px;margin-bottom:.75rem;
+}
+.board-outer::before,.board-outer::after{
+  content:'';display:block;height:6px;
+  background:repeating-linear-gradient(90deg,
+    var(--red-ochre) 0,var(--red-ochre) 8px,
+    var(--clay) 8px,var(--clay) 12px,
+    var(--black-ink) 12px,var(--black-ink) 14px,
+    var(--clay) 14px,var(--clay) 18px);
+  border-radius:2px;margin-bottom:8px;
+}
+.board-outer::after{margin-top:8px;margin-bottom:0}
+.board{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;position:relative}
+/* S-path row direction arrows via row pseudo-classes */
+/* Row 1 (sq1-10): left→right  — left border accent */
+.sq.row1{border-left:3px solid #c08040}
+.sq.row1.sq-start{border-radius:6px 3px 3px 6px}
+.sq.row1.sq-end{border-radius:3px 6px 6px 3px}
+/* Row 2 (sq11-20): right→left — right border accent */
+.sq.row2{border-right:3px solid #c08040}
+.sq.row2.sq-start{border-radius:3px 6px 6px 3px}
+.sq.row2.sq-end{border-radius:6px 3px 3px 6px}
+/* Row 3 (sq21-30): left→right — left border accent */
+.sq.row3{border-left:3px solid #c08040}
+.sq.row3.sq-start{border-radius:6px 3px 3px 6px}
+.sq.row3.sq-end{border-radius:3px 6px 6px 3px}
+/* Corner turning squares get double-sided accent */
+.sq.turn-br{border-right:3px solid var(--gold);border-bottom:3px solid var(--gold);border-radius:3px 3px 10px 3px}
+.sq.turn-bl{border-left:3px solid var(--gold);border-bottom:3px solid var(--gold);border-radius:3px 3px 3px 10px}
+
+.sq{
+  aspect-ratio:1;border-radius:3px;border:1px solid #7a5018;
+  background:var(--clay);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  position:relative;cursor:default;overflow:visible;
+  transition:background .12s,box-shadow .12s;
+}
+.sqn{
+  position:absolute;top:2px;right:3px;
+  font-size:clamp(11px,2.4vw,20px);color:var(--ink);
+  opacity:.85;font-weight:bold;line-height:1;z-index:2;
+}
+.sqname{
+  font-size:clamp(8px,1.5vw,13px);color:var(--ink);
+  font-weight:bold;line-height:1;
+  position:absolute;bottom:2px;right:3px;z-index:2;
+}
+.sq-sym{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-56%);
+  font-size:clamp(14px,3vw,26px);
+  color:var(--ink);opacity:.5;
+  pointer-events:none;z-index:1;
+  line-height:1;
+}
+.sq.s27 .sq-sym{color:#b0d0ff;opacity:.6}
+.sq.s30 .sq-sym{color:var(--ink);opacity:.5}
+.sq.s15 .sq-sym,.sq.s26 .sq-sym{opacity:.55}
+.sq.s15{background:#b89050;border-color:#d4b060}
+.sq.s26{background:#c8a040;border-color:#e0c050}
+.sq.s27{background:var(--water-blue);border-color:#6080d0}
+.sq.s27 .sqn,.sq.s27 .sqname{color:#b0d0ff}
+.sq.s28{background:#a08030}
+.sq.s29{background:#907020}
+.sq.s30{background:#d0a820;border-color:var(--gold)}
+.sq.movable{background:#e8d870;box-shadow:0 0 0 2px var(--gold);cursor:pointer}
+.sq.movable:hover{background:#f5e890}
+
+.pieces{
+  display:flex;flex-wrap:wrap;gap:1px;
+  justify-content:flex-start;align-items:flex-end;
+  z-index:3;position:absolute;bottom:2px;left:2px;
+}
+.piece{width:14px;height:19px;border:1px solid rgba(0,0,0,.5)}
+.piece.human{background:var(--papyrus);border-radius:2px}
+.piece.ai{background:var(--red-ochre);clip-path:polygon(50% 0%,0% 100%,100% 100%)}
+
+#anim-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:50}
+.anim-piece{
+  position:absolute;width:14px;height:19px;
+  border:1px solid rgba(0,0,0,.6);pointer-events:none;
+  transition:left .2s ease-in-out,top .2s ease-in-out;z-index:99;
+}
+.anim-piece.human{background:var(--papyrus);border-radius:2px}
+.anim-piece.ai{background:var(--red-ochre);clip-path:polygon(50% 0%,0% 100%,100% 100%)}
+
+/* Dice panel */
+.dice-panel{
+  background:#140a00;border:1px solid var(--clay);
+  border-radius:6px;padding:.65rem 1rem;
+  margin-bottom:.7rem;display:flex;align-items:center;gap:1rem;
+}
+.dice-left{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:80px}
+.dice-label{font-size:.62rem;color:#806020;letter-spacing:.08em;text-align:center}
+.sticks-row{display:flex;gap:3px;align-items:center}
+.stick{width:20px;height:10px;border-radius:3px;border:1px solid var(--clay)}
+.stick.light{background:#f0e090}.stick.dark{background:#2a1000}
+.roll-big{font-size:2rem;font-weight:bold;color:var(--gold);min-width:32px;text-align:center;line-height:1}
+.dice-divider{width:1px;background:var(--clay);opacity:.35;align-self:stretch}
+.dice-right{flex:1;display:flex;flex-direction:column;gap:6px}
+.dice-action-row{display:flex;align-items:center;gap:8px}
+.move-label{font-size:.72rem;color:var(--papyrus);flex:1}
+.move-label em{color:var(--gold);font-style:normal;font-weight:bold;font-size:1rem}
+
+.controls{display:flex;gap:7px;justify-content:center;margin-bottom:.75rem;flex-wrap:wrap}
+.btn{
+  background:#1e0e00;border:1px solid var(--clay);
+  border-bottom:2px solid var(--red-ochre);border-radius:4px;
+  padding:.4rem .95rem;color:var(--gold);font-family:Georgia,serif;
+  font-size:.78rem;cursor:pointer;transition:background .14s
+}
+.btn:hover:not(:disabled){background:#3a1a00}
+.btn:disabled{opacity:.38;cursor:default}
+.btn-roll-main{
+  background:#2a1200;border:1px solid var(--gold);
+  border-bottom:2px solid var(--red-ochre);border-radius:4px;
+  padding:.38rem .9rem;color:var(--gold);font-family:Georgia,serif;
+  font-size:.8rem;cursor:pointer;transition:background .14s;white-space:nowrap;
+}
+.btn-roll-main:hover:not(:disabled){background:#4a2000}
+.btn-roll-main:disabled{opacity:.38;cursor:default}
+
+.legend{display:flex;gap:14px;justify-content:center;font-size:.68rem;color:#906030;margin-bottom:.75rem}
+.leg{display:flex;align-items:center;gap:5px}
+.leg-pc{width:14px;height:19px;border:1px solid rgba(0,0,0,.4)}
+
+.ref{
+  background:#140a00;border:1px solid #5a3808;
+  border-top:2px solid var(--red-ochre);border-radius:0 0 5px 5px;
+  padding:.5rem .85rem;font-size:.64rem;color:#907040;line-height:1.85
+}
+.ref span{color:#e0b040}
+
+/* ── Flying stick animation ── */
+.fly-stick{
+  position:fixed;width:22px;height:11px;
+  border-radius:3px;border:1px solid #9a6820;
+  pointer-events:none;z-index:9999;
+  transform-origin:center center;
+}
+.fly-stick.light{background:#f0e090}
+.fly-stick.dark{background:#2a1000}
+
+/* ── Win popup ── */
+.popup-overlay{
+  position:fixed;inset:0;background:rgba(10,5,0,.82);
+  display:flex;align-items:center;justify-content:center;
+  z-index:10000;
+}
+.popup-box{
+  background:#1e1000;
+  border:3px solid var(--gold);
+  border-radius:10px;
+  padding:2rem 2.5rem;
+  text-align:center;
+  max-width:320px;width:90%;
+  animation:popup-in .35s ease;
+}
+@keyframes popup-in{
+  from{transform:scale(.7);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+.popup-box h2{font-size:1.6rem;color:var(--gold);margin-bottom:.5rem}
+.popup-box p{font-size:.85rem;color:var(--papyrus);margin-bottom:1.2rem;line-height:1.6}
+.popup-btn{
+  background:#2a1200;border:1px solid var(--gold);
+  border-bottom:2px solid var(--red-ochre);
+  border-radius:6px;padding:.5rem 1.4rem;
+  color:var(--gold);font-family:Georgia,serif;font-size:.85rem;
+  cursor:pointer;transition:background .15s;
+}
+.popup-btn:hover{background:#4a2000}
+
+@keyframes fly-arc{
+  0%  {transform:translateY(0px) rotate(0deg);opacity:1}
+  35% {transform:translateY(-90px) rotate(200deg);opacity:1}
+  100%{transform:translateY(50px) rotate(400deg);opacity:0}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ① タイトル ＋ 最初からボタン -->
+  <div class="title-block">
+    <div class="title-deco">
+      <div class="deco-line"></div>
+      <div class="deco-eye">𓂀</div>
+      <div class="deco-line"></div>
+    </div>
+    <h1>SENET</h1>
+    <div class="hiero">𓊃 𓈖 𓏏 𓏠</div>
+    <div class="sub">通過のゲーム ― 紀元前3500年 ナカダ文化</div>
+    <div style="margin-top:.6rem">
+      <button class="btn" onclick="initGame()">最初から</button>
+    </div>
+    <svg class="naqada-band" viewBox="0 0 400 12" preserveAspectRatio="none">
+      <polyline points="0,12 20,0 40,12 60,0 80,12 100,0 120,12 140,0 160,12 180,0 200,12 220,0 240,12 260,0 280,12 300,0 320,12 340,0 360,12 380,0 400,12" fill="none" stroke="#8b2010" stroke-width="1.5"/>
+      <polyline points="0,12 20,0 40,12 60,0 80,12 100,0 120,12 140,0 160,12 180,0 200,12 220,0 240,12 260,0 280,12 300,0 320,12 340,0 360,12 380,0 400,12" fill="none" stroke="#c08040" stroke-width=".5" transform="translate(0,2)"/>
+    </svg>
+  </div>
+
+  <!-- ② ターン表示 -->
+  <div class="status-bar">
+    <div class="turn-lbl" id="turn-lbl">あなたの番</div>
+    <div class="msg" id="msg">投擲棒を投げてください</div>
+  </div>
+
+  <!-- ③ 脱出数 ＋ 駒の説明 -->
+  <div class="info-bar">
+    <div class="info-player">
+      <div class="info-piece human-pc"></div>
+      <div>
+        <div class="info-name">あなた（スプール）</div>
+        <div class="info-off">脱出 <span class="bo-cnt" id="h-off">0</span>/5</div>
+      </div>
+    </div>
+    <div class="info-divider"></div>
+    <div class="info-player">
+      <div class="info-piece ai-pc"></div>
+      <div>
+        <div class="info-name">AI（コーン）</div>
+        <div class="info-off">脱出 <span class="bo-cnt" id="a-off">0</span>/5</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ ボード -->
+  <div class="board-outer" id="board-outer">
+    <div class="board" id="board"></div>
+    <div id="anim-layer"></div>
+  </div>
+
+  <!-- ⑤ 投擲パネル：ボタン・棒・マス数を一列に -->
+  <div class="dice-panel">
+    <div class="dice-action-row">
+      <button class="btn-roll-main" id="btn-roll" onclick="rollDice()">𓏤 投擲棒を投げる</button>
+      <button class="btn" id="btn-pass" style="display:none" onclick="passTurn()">パス</button>
+    </div>
+    <div class="dice-divider"></div>
+    <div class="dice-left">
+      <div class="dice-label">投擲棒</div>
+      <div class="sticks-row" id="sticks"></div>
+    </div>
+    <div class="dice-divider"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;min-width:52px">
+      <div class="dice-label">移動マス数</div>
+      <div class="roll-big" id="roll-num">―</div>
+    </div>
+    <div class="dice-divider"></div>
+    <div class="dice-right">
+      <div class="move-label" id="move-label">投擲棒を投げて<br>マス数を決めてください</div>
+    </div>
+  </div>
+
+  <svg class="naqada-band" viewBox="0 0 400 12" preserveAspectRatio="none" style="margin:.4rem 0">
+    <polyline points="0,0 20,12 40,0 60,12 80,0 100,12 120,0 140,12 160,0 180,12 200,0 220,12 240,0 260,12 280,0 300,12 320,0 340,12 360,0 380,12 400,0" fill="none" stroke="#8b2010" stroke-width="1.5"/>
+  </svg>
+
+  <div class="ref">
+    <span>投擲棒（出目）</span>：白1=1マス＋もう一度 ／ 白2=2マス ／ 白3=3マス ／ 白4=4マス＋もう一度 ／ 全黒=5マス＋もう一度<br>
+    <span>ブロッケード</span>：同じ駒が2つ以上隣接 → 相手は飛び越えも追い返しもできない。<br>
+    <span>15 生命の家</span>（安全・水の家からの帰還先） ／
+    <span>26 幸福の家</span>（必ず止まる・安全・脱出可） ／
+    <span>27 水の家</span>（生命の家＝15へ強制送還） ／
+    <span>28 三真理の家</span>（安全・<b>出目3でのみ脱出</b>） ／
+    <span>29 レー・アトゥムの家</span>（安全・<b>出目2でのみ脱出</b>） ／
+    <span>30 ラーの家</span>（安全・任意の出目で脱出）<br>
+    先に5駒を全部脱出させた方の勝ち。
+  </div>
+
+  <!-- Win popup -->
+  <div class="popup-overlay" id="win-popup" style="display:none">
+    <div class="popup-box">
+      <div style="font-size:2.5rem;margin-bottom:.5rem" id="popup-icon">𓇳</div>
+      <h2 id="popup-title">勝利！</h2>
+      <p id="popup-msg">ラーの祝福を受けた</p>
+      <button class="popup-btn" onclick="closePopup()">もう一度挑む</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SPECIAL_NAMES={15:'生命',26:'幸福',27:'水',28:'三真理',29:'Re-Atum',30:'Ra'};
+// Hieroglyph symbols for special squares
+const SPECIAL_SVG={15:'𓋹',26:'𓄿',27:'𓈗',28:'∴',29:'𓂀',30:'𓇳'};
+// Safe squares: cannot be swapped off (only in positions 1-26 range; last 4 are NOT safe from each other)
+const SAFE_EARLY=new Set([15,26]);
+// Exit squares and their required roll (null = any)
+const EXIT_ROLL={26:null,27:4,28:3,29:2,30:null};
+
+const PATH=[
+  ...Array.from({length:10},(_,i)=>i+1),
+  ...Array.from({length:10},(_,i)=>20-i),
+  ...Array.from({length:10},(_,i)=>i+21)
+];
+
+let G={};
+let animating=false;
+
+function iD(x){return document.getElementById(x);}
+function setMsg(t){iD('msg').textContent=t;}
+function setML(t){const el=iD('move-label');if(el)el.innerHTML=t;}
+function setUI(lbl,msg){iD('turn-lbl').textContent=lbl;setMsg(msg);}
+function updateBO(){iD('h-off').textContent=G.offH;iD('a-off').textContent=G.offA;}
+
+function initGame(){
+  G={
+    board:Array(31).fill(null),
+    human:[1,3,5,7,9],
+    ai:[2,4,6,8,10],
+    turn:'human',phase:'roll',
+    rollVal:0,movable:[],
+    offH:0,offA:0,done:false
+  };
+  G.human.forEach(s=>{G.board[s]={owner:'human'};});
+  G.ai.forEach(s=>{G.board[s]={owner:'ai'};});
+  animating=false;
+  iD('anim-layer').innerHTML='';
+  iD('sticks').innerHTML='';
+  iD('roll-num').textContent='―';
+  setML('投擲棒を投げて<br>マス数を決めてください');
+  iD('btn-roll').disabled=false;
+  iD('btn-pass').style.display='none';
+  setUI('あなたの番','投擲棒を投げてください');
+  updateBO();renderBoard();
+}
+
+/* ── Blockade: 3+ consecutive same-owner pieces ── */
+function blockadeCovers(sq, moverOwner){
+  const opp=moverOwner==='human'?'ai':'human';
+  const cell=G.board[sq];
+  if(!cell||cell.owner!==opp) return false;
+  let count=1;
+  for(let i=sq-1;i>=1;i--){if(G.board[i]&&G.board[i].owner===opp)count++;else break;}
+  for(let i=sq+1;i<=30;i++){if(G.board[i]&&G.board[i].owner===opp)count++;else break;}
+  return count>=3;
+}
+
+/* ── Can piece at `from` move `val` squares? ── */
+function canMove(from,val,owner){
+  if(from==='off') return false;
+  const opp=owner==='human'?'ai':'human';
+  const dest=from+val;
+
+  // Must stop on sq26 before proceeding — cannot skip it
+  if(from<26&&dest>26) return false;
+
+  // Bearing off
+  if(dest>30){
+    if(from<26) return false;
+    // sq27: only roll=4 allows direct exit (Option 2)
+    if(from===27) return val===4;
+    // sq28: only roll=3
+    if(from===28) return val===3;
+    // sq29: only roll=2
+    if(from===29) return val===2;
+    // sq26, sq30: any roll (overshoot allowed)
+    return true;
+  }
+
+  // Cannot land on own piece
+  if(G.board[dest]&&G.board[dest].owner===owner) return false;
+
+  // Check path for opponent blockade (3+ consecutive)
+  for(let s=from+1;s<=dest;s++){
+    if(blockadeCovers(s,owner)) return false;
+  }
+
+  // Safe early squares: cannot swap if occupied by opp
+  if(SAFE_EARLY.has(dest)&&G.board[dest]&&G.board[dest].owner===opp) return false;
+
+  // Last 4 squares (27-30) cannot protect each other — swapping allowed
+  return true;
+}
+
+function calcMovable(pieces,val,owner){
+  return pieces.filter(sq=>canMove(sq,val,owner));
+}
+
+/* ── Flying stick animation ── */
+function flySticks(callback){
+  const sticksEl=iD('sticks');
+  const rect=sticksEl.getBoundingClientRect();
+  const frags=[];
+  for(let i=0;i<4;i++){
+    const el=document.createElement('div');
+    el.className='fly-stick '+(Math.random()<.5?'light':'dark');
+    const spreadX=(i-1.5)*28+(Math.random()-0.5)*16;
+    el.style.left=(rect.left+rect.width/2+spreadX-11)+'px';
+    el.style.top=(rect.top-5)+'px';
+    const dur=480+Math.random()*160;
+    const delay=i*55;
+    el.style.animation=`fly-arc ${dur}ms ${delay}ms ease-out forwards`;
+    document.body.appendChild(el);
+    frags.push(el);
+  }
+  setTimeout(()=>{frags.forEach(e=>e.remove());callback();},780);
+}
+
+/* ── Roll: 4 sticks, values 1-4 only (no 0/5) ── */
+function rollDice(){
+  if(G.done||G.phase!=='roll'||animating) return;
+  iD('btn-roll').disabled=true;
+  setMsg('投擲中…');
+  iD('sticks').innerHTML='';
+  iD('roll-num').textContent='…';
+
+  flySticks(()=>{
+    // Compute result after animation
+    let r,sum;
+    r=Array.from({length:4},()=>Math.random()<.5?1:0);
+    sum=r.reduce((a,b)=>a+b,0);
+    G.rollVal=sum===0?5:sum;  // 全黒=5マス
+    G.phase='move';
+
+    iD('sticks').innerHTML=r.map(v=>`<div class="stick ${v?'light':'dark'}"></div>`).join('');
+    iD('roll-num').textContent=G.rollVal+(sum===0?' 全黒':'');
+
+    const myP=G.turn==='human'?G.human:G.ai;
+    G.movable=calcMovable(myP,G.rollVal,G.turn);
+
+  const bonus=G.rollVal===1||G.rollVal===4||G.rollVal===5;
+  const bonusLabel=sum===0?'全黒':'白'+G.rollVal+'面';
+  const bonusNote=bonus?'<br><span style="font-size:.62rem;color:#f0a020">'+bonusLabel+' → ボーナスターン！</span>':'';
+
+  if(G.movable.length===0){
+    setMsg(`出目 ${G.rollVal} ― 動かせる駒なし`);
+    setML('動かせる駒が<br>ありません'+bonusNote);
+    iD('btn-pass').style.display='inline-block';
+  } else {
+    if(G.turn==='human'){
+      setMsg(`出目 ${G.rollVal} ― 動かす駒を選んでください`);
+      setML(`<em>${G.rollVal}</em>マス進められます${bonusNote}<br><span style="font-size:.62rem;color:#806020">光るマスをクリック</span>`);
+    } else {
+      setMsg(`出目 ${G.rollVal} ― AI が考えています`);
+      setML(`AI が <em>${G.rollVal}</em>マス<br>移動します${bonusNote}`);
+    }
+  }
+    renderBoard();
+    if(G.turn==='ai') setTimeout(aiMove,600);
+  }); // end flySticks callback
+}
+
+/* ── Animation ── */
+function getSqCenter(sq){
+  const cells=iD('board').children;
+  const pi=PATH.indexOf(sq);
+  if(pi<0) return null;
+  const outerRect=iD('board-outer').getBoundingClientRect();
+  const cellRect=cells[pi].getBoundingClientRect();
+  return{x:cellRect.left-outerRect.left+cellRect.width/2,
+         y:cellRect.top-outerRect.top+cellRect.height/2};
+}
+
+function animatePiece(from,to,owner){
+  return new Promise(resolve=>{
+    if(from==='off'||to>30){resolve();return;}
+    const layer=iD('anim-layer');
+    const pel=document.createElement('div');
+    pel.className='anim-piece '+owner;
+    const sp=getSqCenter(from);
+    if(!sp){resolve();return;}
+    pel.style.left=(sp.x-7)+'px';
+    pel.style.top=(sp.y-9)+'px';
+    layer.appendChild(pel);
+    const steps=[];
+    for(let s=from+1;s<=Math.min(to,30);s++) steps.push(s);
+    if(!steps.length){setTimeout(()=>{pel.remove();resolve();},150);return;}
+    let si=0;
+    const STEP=220;
+    function next(){
+      if(si>=steps.length){setTimeout(()=>{pel.remove();resolve();},100);return;}
+      const p=getSqCenter(steps[si++]);
+      if(p){pel.style.left=(p.x-7)+'px';pel.style.top=(p.y-9)+'px';}
+      setTimeout(next,STEP);
+    }
+    setTimeout(next,60);
+  });
+}
+
+async function applyMoveAnimated(from,owner,val,cb){
+  animating=true;
+  const dest=Math.min(from+val,31);
+  renderBoardCore(from);
+  await animatePiece(from,dest,owner);
+  applyMoveLogic(from,owner,val);
+  animating=false;
+  renderBoard();
+  if(cb) cb();
+}
+
+function applyMoveLogic(from,owner,val){
+  const opp=owner==='human'?'ai':'human';
+  const dest=from+val;
+  const pieces=G[owner];
+  const idx=pieces.indexOf(from);
+  G.board[from]=null;
+
+  // Bear off
+  if(dest>30){
+    pieces[idx]='off';
+    if(owner==='human')G.offH++;else G.offA++;
+    updateBO();
+    setMsg(`駒を脱出！（${owner==='human'?G.offH:G.offA}/5）`);
+    checkWin();return;
+  }
+
+  // sq27 direct exit via roll=4 handled above (dest>30 when from=27,val=4)
+  // sq27 → return to 15 (Option 1)
+  if(dest===27){
+    const back=15;
+    if(G.board[back]&&G.board[back].owner===opp){
+      // find first available square behind 15
+      let alt=14;
+      while(alt>=1&&G.board[alt])alt--;
+      if(alt>=1){G[opp][G[opp].indexOf(back)]=alt;G.board[alt]={owner:opp};}
+      else{G[opp][G[opp].indexOf(back)]='off';if(opp==='human')G.offH++;else G.offA++;updateBO();}
+    } else {G.board[27]=null;}
+    pieces[idx]=back;G.board[back]={owner};
+    setMsg('水の家！再生の家（15）へ戻る');
+    checkWin();return;
+  }
+
+  // Swap opponent
+  if(G.board[dest]&&G.board[dest].owner===opp){
+    const oi=G[opp].indexOf(dest);
+    // if opponent was on last 4 squares (27-30) and we swap from sq26, they go to sq27
+    if(from===26&&dest>=27&&dest<=30){
+      G[opp][oi]=27;G.board[27]={owner:opp};
+      setMsg('相手を水の家（27）へ！');
+    } else {
+      G[opp][oi]=from;G.board[from]={owner:opp};
+      setMsg('相手の駒を追い返した！');
+    }
+  }
+
+  pieces[idx]=dest;G.board[dest]={owner};
+  checkWin();
+}
+
+function afterMove(owner){
+  if(G.done) return;
+  // Bonus on roll 2 or 3
+  const bonus=G.rollVal===1||G.rollVal===4||G.rollVal===5;
+  G.movable=[];
+  iD('sticks').innerHTML='';
+  iD('roll-num').textContent='―';
+
+  if(bonus){
+    G.phase='roll';
+    iD('btn-pass').style.display='none';
+    if(owner==='human'){
+      iD('btn-roll').disabled=false;
+      setMsg('ボーナスターン！もう一度投げられます');
+      setML('ボーナスターン！<br>もう一度投げてください');
+    } else {
+      setMsg('AI ボーナス！');
+      setML('AI ボーナス！<br>もう一度…');
+      setTimeout(rollDice,700);
+    }
+  } else {
+    const next=owner==='human'?'ai':'human';
+    G.turn=next;G.phase='roll';
+    iD('btn-pass').style.display='none';
+    if(next==='human'){
+      iD('btn-roll').disabled=false;
+      iD('turn-lbl').textContent='あなたの番';
+      setMsg('あなたの番です');
+      setML('投擲棒を投げて<br>マス数を決めてください');
+    } else {
+      iD('turn-lbl').textContent='AI の番';
+      setMsg('AI が考えています…');
+      setML('AI の番です…');
+      setTimeout(rollDice,600);
+    }
+  }
+  renderBoard();
+}
+
+function movePiece(from){
+  if(G.done||G.turn!=='human'||G.phase!=='move'||animating) return;
+  if(!G.movable.includes(from)) return;
+  const val=G.rollVal;
+  setMsg(`移動中…`);
+  applyMoveAnimated(from,'human',val,()=>{afterMove('human');});
+}
+
+function aiMove(){
+  if(G.movable.length===0){passTurn();return;}
+  let best=G.movable[0],bestScore=-9999;
+  G.movable.forEach(sq=>{
+    let score=sq;
+    const dest=sq+G.rollVal;
+    if(dest>30) score+=80;
+    else if(dest===27) score-=50;
+    else if(dest===26) score+=15;
+    if(dest<=30&&G.board[dest]&&G.board[dest].owner==='human') score+=20;
+    score+=sq*.3;
+    if(score>bestScore){bestScore=score;best=sq;}
+  });
+  const val=G.rollVal;
+  setMsg(`AI が駒を動かしています…`);
+  applyMoveAnimated(best,'ai',val,()=>{afterMove('ai');});
+}
+
+function passTurn(){
+  iD('btn-pass').style.display='none';
+  iD('btn-roll').disabled=false;
+  G.movable=[];
+  iD('sticks').innerHTML='';
+  iD('roll-num').textContent='―';
+  const next=G.turn==='human'?'ai':'human';
+  G.turn=next;G.phase='roll';
+  if(next==='human'){
+    iD('turn-lbl').textContent='あなたの番';
+    setMsg('あなたの番です');
+    setML('投擲棒を投げて<br>マス数を決めてください');
+  } else {
+    iD('turn-lbl').textContent='AI の番';
+    setMsg('AI が考えています…');
+    setML('AI の番です…');
+    setTimeout(rollDice,600);
+  }
+  renderBoard();
+}
+
+function checkWin(){
+  if(G.offH===5){
+    G.done=true;iD('btn-roll').disabled=true;
+    setTimeout(()=>showPopup('𓇳','あなたの勝利！','ラーの祝福を受けた。<br>魂は来世へ旅立つ。'),600);
+  } else if(G.offA===5){
+    G.done=true;iD('btn-roll').disabled=true;
+    setTimeout(()=>showPopup('𓂀','AIの勝利','ファラオの魂が先に旅立った。<br>もう一度挑め。'),600);
+  }
+}
+function showPopup(icon,title,msg){
+  iD('popup-icon').textContent=icon;
+  iD('popup-title').textContent=title;
+  iD('popup-msg').innerHTML=msg;
+  iD('win-popup').style.display='flex';
+}
+function closePopup(){
+  iD('win-popup').style.display='none';
+  initGame();
+}
+
+function renderBoardCore(hiddenSq){
+  const boardEl=iD('board');boardEl.innerHTML='';
+  PATH.forEach(sq=>{
+    const div=document.createElement('div');
+    const cls=['sq'];
+    if(SPECIAL_NAMES[sq]) cls.push('s'+sq);
+    if(!animating&&G.turn==='human'&&G.movable.includes(sq)) cls.push('movable');
+    // S-path row + corner classes
+    if(sq<=10){
+      cls.push('row1');
+      if(sq===1) cls.push('sq-start');
+      if(sq===10) cls.push('sq-end','turn-br');
+    } else if(sq<=20){
+      cls.push('row2');
+      if(sq===11) cls.push('sq-start');
+      if(sq===20) cls.push('sq-end','turn-bl');
+    } else {
+      cls.push('row3');
+      if(sq===21) cls.push('sq-start');
+      if(sq===30) cls.push('sq-end');
+    }
+    div.className=cls.join(' ');
+
+    const numEl=document.createElement('div');
+    numEl.className='sqn';numEl.textContent=sq;div.appendChild(numEl);
+
+    if(SPECIAL_SVG[sq]){
+      const sym=document.createElement('div');
+      sym.className='sq-sym';
+      sym.textContent=SPECIAL_SVG[sq];
+      div.appendChild(sym);
+    }
+    if(SPECIAL_NAMES[sq]){
+      const nm=document.createElement('div');
+      nm.className='sqname';nm.textContent=SPECIAL_NAMES[sq];div.appendChild(nm);
+    }
+
+    const cell=G.board[sq];
+    if(cell&&sq!==hiddenSq){
+      const pw=document.createElement('div');pw.className='pieces';
+      const pc=document.createElement('div');pc.className='piece '+cell.owner;
+      pw.appendChild(pc);div.appendChild(pw);
+    }
+
+    if(!animating&&G.turn==='human'&&G.movable.includes(sq)){
+      div.onclick=()=>movePiece(sq);
+    }
+    boardEl.appendChild(div);
+  });
+}
+function renderBoard(){renderBoardCore(null);}
+
+initGame();
+</script>
+</body>
+</html>
