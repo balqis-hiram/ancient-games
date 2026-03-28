@@ -95,11 +95,14 @@ h1{color:var(--gold);font-size:clamp(1.2rem,5vw,1.7rem);letter-spacing:.15em}
 .sq.turn-bl{border-left:3px solid var(--gold);border-bottom:3px solid var(--gold);border-radius:3px 3px 3px 10px}
 
 .sq{
-  aspect-ratio:1;border-radius:3px;border:1px solid #7a5018;
+  aspect-ratio:3/4;border-radius:3px;border:1px solid #7a5018;
   background:var(--clay);display:flex;flex-direction:column;
   align-items:center;justify-content:center;
   position:relative;cursor:default;overflow:visible;
   transition:background .12s,box-shadow .12s;
+}
+@media(min-width:500px){
+  .sq{aspect-ratio:1;}
 }
 .sqn{
   position:absolute;top:1px;right:2px;
@@ -110,12 +113,16 @@ h1{color:var(--gold);font-size:clamp(1.2rem,5vw,1.7rem);letter-spacing:.15em}
   font-size:clamp(6px,1.4vw,11px);color:var(--ink);
   font-weight:bold;line-height:1;
   position:absolute;bottom:1px;right:2px;z-index:2;
+  display:none;
+}
+@media(min-width:500px){
+  .sqname{display:block}
 }
 .sq-sym{
-  position:absolute;top:50%;left:50%;
-  transform:translate(-50%,-56%);
-  font-size:clamp(11px,3.2vw,24px);
-  color:var(--ink);opacity:.5;
+  position:absolute;top:48%;left:50%;
+  transform:translate(-50%,-50%);
+  font-size:clamp(13px,4vw,26px);
+  color:var(--ink);opacity:.55;
   pointer-events:none;z-index:1;
   line-height:1;
 }
@@ -150,27 +157,29 @@ h1{color:var(--gold);font-size:clamp(1.2rem,5vw,1.7rem);letter-spacing:.15em}
 .anim-piece.human{background:var(--papyrus);border-radius:2px}
 .anim-piece.ai{background:var(--red-ochre);clip-path:polygon(50% 0%,0% 100%,100% 100%)}
 
-/* Dice panel */
+/* Dice panel — mobile: vertical stack, desktop: horizontal */
 .dice-panel{
   background:#140a00;border:1px solid var(--clay);
-  border-radius:6px;padding:.5rem .7rem;
-  margin-bottom:.6rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;
+  border-radius:6px;padding:.6rem .8rem;
+  margin-bottom:.6rem;
+  display:flex;flex-direction:column;gap:.6rem;
 }
+.dice-top-row{display:flex;align-items:center;gap:.6rem}
 .dice-left{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:60px}
-.dice-label{font-size:.58rem;color:#806020;letter-spacing:.06em;text-align:center}
+.dice-label{font-size:.6rem;color:#806020;letter-spacing:.06em;text-align:center}
 .sticks-row{display:flex;gap:3px;align-items:center}
-.stick{width:16px;height:9px;border-radius:3px;border:1px solid var(--clay)}
+.stick{width:18px;height:10px;border-radius:3px;border:1px solid var(--clay)}
 .stick.light{background:#f0e090}.stick.dark{background:#2a1000}
-.roll-big{font-size:1.7rem;font-weight:bold;color:var(--gold);min-width:28px;text-align:center;line-height:1}
+.roll-num-block{display:flex;flex-direction:column;align-items:center;min-width:52px}
+.roll-big{font-size:2rem;font-weight:bold;color:var(--gold);line-height:1;text-align:center}
 .dice-divider{width:1px;background:var(--clay);opacity:.35;align-self:stretch}
-.dice-right{flex:1;min-width:120px;display:flex;flex-direction:column;gap:5px}
+.dice-right{flex:1;display:flex;flex-direction:column;gap:4px}
 .dice-action-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.move-label{font-size:.68rem;color:var(--papyrus);flex:1;line-height:1.4}
-.move-label em{color:var(--gold);font-style:normal;font-weight:bold;font-size:.95rem}
-@media(max-width:400px){
-  .dice-divider{display:none}
-  .dice-panel{gap:.4rem}
-  .dice-left{min-width:50px}
+.move-label{font-size:.72rem;color:var(--papyrus);line-height:1.5}
+.move-label em{color:var(--gold);font-style:normal;font-weight:bold;font-size:1rem}
+@media(min-width:500px){
+  .dice-panel{flex-direction:row;align-items:center;padding:.6rem 1rem;gap:.8rem}
+  .dice-top-row{display:contents}
 }
 
 .controls{display:flex;gap:7px;justify-content:center;margin-bottom:.75rem;flex-wrap:wrap}
@@ -306,24 +315,25 @@ h1{color:var(--gold);font-size:clamp(1.2rem,5vw,1.7rem);letter-spacing:.15em}
 
   <!-- ⑤ 投擲パネル：ボタン・棒・マス数を一列に -->
   <div class="dice-panel">
-    <div class="dice-action-row">
-      <button class="btn-roll-main" id="btn-roll" onclick="rollDice()">𓏤 投擲棒を投げる</button>
-      <button class="btn" id="btn-pass" style="display:none" onclick="passTurn()">パス</button>
+    <!-- 上段: ボタン + 投擲棒 + マス数 (横並び) -->
+    <div class="dice-top-row">
+      <div class="dice-action-row">
+        <button class="btn-roll-main" id="btn-roll" onclick="rollDice()">𓏤 投擲棒を投げる</button>
+        <button class="btn" id="btn-pass" style="display:none" onclick="passTurn()">パス</button>
+      </div>
+      <div class="dice-divider"></div>
+      <div class="dice-left">
+        <div class="dice-label">投擲棒</div>
+        <div class="sticks-row" id="sticks"></div>
+      </div>
+      <div class="dice-divider"></div>
+      <div class="roll-num-block">
+        <div class="dice-label">移動マス数</div>
+        <div class="roll-big" id="roll-num">―</div>
+      </div>
     </div>
-    <div class="dice-divider"></div>
-    <div class="dice-left">
-      <div class="dice-label">投擲棒</div>
-      <div class="sticks-row" id="sticks"></div>
-    </div>
-    <div class="dice-divider"></div>
-    <div style="display:flex;flex-direction:column;align-items:center;min-width:52px">
-      <div class="dice-label">移動マス数</div>
-      <div class="roll-big" id="roll-num">―</div>
-    </div>
-    <div class="dice-divider"></div>
-    <div class="dice-right">
-      <div class="move-label" id="move-label">投擲棒を投げて<br>マス数を決めてください</div>
-    </div>
+    <!-- 下段: 状態テキスト -->
+    <div class="move-label" id="move-label">投擲棒を投げてマス数を決めてください</div>
   </div>
 
   <svg class="naqada-band" viewBox="0 0 400 12" preserveAspectRatio="none" style="margin:.4rem 0">
