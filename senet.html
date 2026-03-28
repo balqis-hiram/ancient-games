@@ -7,9 +7,15 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --mud:#1a0e04;--clay:#c08040;--sand:#d4a860;--papyrus:#e8d090;
-  --red-ochre:#8b2010;--black-ink:#1a0a00;--water-blue:#2848a0;
-  --gold:#f0c030;--ink:#2a1000;
+  --mud:#1a0e04;
+  --clay:#c08040;
+  --sand:#d4a860;
+  --papyrus:#e8d090;
+  --red-ochre:#8b2010;
+  --black-ink:#1a0a00;
+  --water-blue:#2848a0;
+  --gold:#f0c030;
+  --ink:#2a1000;
 }
 body{
   background:var(--mud);min-height:100vh;
@@ -193,7 +199,7 @@ h1{color:var(--gold);font-size:clamp(1.2rem,5vw,1.7rem);letter-spacing:.15em}
 .btn:hover:not(:disabled){background:#3a1a00}
 .btn:disabled{opacity:.38;cursor:default}
 .btn-roll-main{
-  background:#2a1200;border:1px solid var(--gold);
+  background:#1e0e00;border:1px solid var(--clay);
   border-bottom:2px solid var(--red-ochre);border-radius:4px;
   padding:.55rem 1rem;color:var(--gold);font-family:Georgia,serif;
   font-size:.8rem;cursor:pointer;transition:background .14s;white-space:nowrap;
@@ -245,7 +251,7 @@ h1{color:var(--gold);font-size:clamp(1.2rem,5vw,1.7rem);letter-spacing:.15em}
 .popup-box h2{font-size:1.6rem;color:var(--gold);margin-bottom:.5rem}
 .popup-box p{font-size:.85rem;color:var(--papyrus);margin-bottom:1.2rem;line-height:1.6}
 .popup-btn{
-  background:#2a1200;border:1px solid var(--gold);
+  background:#1e0e00;border:1px solid var(--clay);
   border-bottom:2px solid var(--red-ochre);
   border-radius:6px;padding:.5rem 1.4rem;
   color:var(--gold);font-family:Georgia,serif;font-size:.85rem;
@@ -409,7 +415,7 @@ function initGame(){
   updateBO();renderBoard();
 }
 
-/* ── Blockade: 3+ consecutive same-owner pieces ── */
+/* ── Blockade: 2+ consecutive same-owner pieces ── */
 function blockadeCovers(sq, moverOwner){
   const opp=moverOwner==='human'?'ai':'human';
   const cell=G.board[sq];
@@ -417,7 +423,7 @@ function blockadeCovers(sq, moverOwner){
   let count=1;
   for(let i=sq-1;i>=1;i--){if(G.board[i]&&G.board[i].owner===opp)count++;else break;}
   for(let i=sq+1;i<=30;i++){if(G.board[i]&&G.board[i].owner===opp)count++;else break;}
-  return count>=3;
+  return count>=2;
 }
 
 /* ── Can piece at `from` move `val` squares? ── */
